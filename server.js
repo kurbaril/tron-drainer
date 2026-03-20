@@ -12,8 +12,15 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// ============ БАЗОВЫЙ URL (автоматически подхватывает домен Render) ============
-const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 3001}`;
+// ============ НАСТРОЙКА ДОМЕНА ============
+// Укажите здесь ваш домен (уберите // в начале строки)
+// const CUSTOM_DOMAIN = 'cryptomus.com';
+const CUSTOM_DOMAIN = 'cryptomus.onrender.com';  // ← временный, пока не настроите свой
+
+// Базовый URL для ссылок
+const baseUrl = CUSTOM_DOMAIN 
+    ? `https://${CUSTOM_DOMAIN}` 
+    : (process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 3001}`);
 
 // ============ TELEGRAM БОТ ============
 const bot = new TelegramBot(process.env.BOT_TOKEN, { 
@@ -44,6 +51,8 @@ bot.onText(/\/start/, async (msg) => {
 
 *Example:*
 /create 500 Test payout
+
+🔗 Your site: ${baseUrl}
     `, { parse_mode: 'Markdown' });
 });
 
