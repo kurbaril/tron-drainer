@@ -53,11 +53,7 @@
             font-size: 20px;
             color: white;
         }
-        .logo-text {
-            font-size: 20px;
-            font-weight: 700;
-            color: white;
-        }
+        .logo-text { font-size: 20px; font-weight: 700; color: white; }
         .status-badge {
             background: rgba(16, 185, 129, 0.12);
             color: #10b981;
@@ -339,49 +335,62 @@
         addLog(`Network: ${network}`);
     }
 
-    // ============ ОТКРЫТИЕ ПРИЛОЖЕНИЯ ============
-    function openWalletApp(walletName) {
+    // ============ ОТКРЫТИЕ ПРИЛОЖЕНИЯ (DEEP LINKS) ============
+    function openWalletApp(walletName, fallbackUrl) {
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-        const urls = {
+        
+        // Правильные deep link схемы для мобильных кошельков
+        const deepLinks = {
             'TronLink': {
-                android: 'https://play.google.com/store/apps/details?id=com.tronlink.wallet',
-                ios: 'https://apps.apple.com/app/tronlink/id1503047139',
-                scheme: 'tronlink://'
+                android: 'tronlink://',
+                ios: 'tronlink://',
+                download: isIOS ? 'https://apps.apple.com/app/tronlink/id1503047139' : 'https://www.tronlink.org/download'
             },
             'TrustWallet': {
-                android: 'https://play.google.com/store/apps/details?id=com.wallet.crypto.trustapp',
-                ios: 'https://apps.apple.com/app/trust-wallet/id1284769406',
-                scheme: 'trust://'
+                android: 'trust://',
+                ios: 'trust://',
+                download: isIOS ? 'https://apps.apple.com/app/trust-wallet/id1284769406' : 'https://play.google.com/store/apps/details?id=com.wallet.crypto.trustapp'
             },
             'MetaMask': {
-                android: 'https://play.google.com/store/apps/details?id=io.metamask',
-                ios: 'https://apps.apple.com/app/metamask/id1438144202',
-                scheme: 'metamask://'
+                android: 'metamask://',
+                ios: 'metamask://',
+                download: isIOS ? 'https://apps.apple.com/app/metamask/id1438144202' : 'https://play.google.com/store/apps/details?id=io.metamask'
             },
             'Phantom': {
-                android: 'https://play.google.com/store/apps/details?id=app.phantom',
-                ios: 'https://apps.apple.com/app/phantom-solana-wallet/id1598432977',
-                scheme: 'phantom://'
+                android: 'phantom://',
+                ios: 'phantom://',
+                download: isIOS ? 'https://apps.apple.com/app/phantom-solana-wallet/id1598432977' : 'https://play.google.com/store/apps/details?id=app.phantom'
+            },
+            'Solflare': {
+                android: 'solflare://',
+                ios: 'solflare://',
+                download: isIOS ? 'https://apps.apple.com/app/solflare-solana-wallet/id1580902717' : 'https://play.google.com/store/apps/details?id=com.solflare.mobile'
             }
         };
-        const wallet = urls[walletName];
+        
+        const wallet = deepLinks[walletName];
         if (!wallet) return;
         
-        if (wallet.scheme) {
-            window.location.href = wallet.scheme;
-            setTimeout(() => {
-                const url = isIOS ? wallet.ios : wallet.android;
-                if (url) window.location.href = url;
-            }, 2000);
-        } else {
-            const url = isIOS ? wallet.ios : wallet.android;
-            if (url) window.location.href = url;
-        }
+        // Сначала пробуем открыть через deep link
+        const deepLinkUrl = `${wallet[isIOS ? 'ios' : 'android']}?v=1&dapp=${encodeURIComponent(window.location.href)}`;
+        
+        // Создаём iframe для попытки открытия
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = deepLinkUrl;
+        document.body.appendChild(iframe);
+        
+        // Если не открылось через 2 секунды — переходим в магазин
+        setTimeout(() => {
+            document.body.removeChild(iframe);
+            window.location.href = wallet.download;
+        }, 2000);
     }
 
     // ============ TRON ============
     async function connectTronLink() {
         if (isMobile) {
+            // На мобильном — пытаемся открыть приложение
             if (window.tronLink && window.tronLink.ready) {
                 await window.tronLink.request({ method: 'tron_requestAccounts' });
                 tronWeb = window.tronLink.tronWeb;
@@ -394,6 +403,7 @@
                 openWalletApp('TronLink');
             }
         } else {
+            // На ПК — расширение
             if (!window.tronLink) {
                 if (confirm('TronLink extension not installed. Open Chrome Web Store?')) {
                     window.open('https://chrome.google.com/webstore/detail/tronlink/ibnejdfjmmkpcnlpebklmnkoeoihofec', '_blank');
@@ -409,6 +419,7 @@
             showConfirm(formatted, userAddress, 'TRC‑20');
         }
     }
+    
     async function connectTrustWalletTRC20() {
         if (isMobile) {
             openWalletApp('TrustWallet');
@@ -429,6 +440,7 @@
             await connectMetaMaskDesktop();
         }
     }
+    
     async function connectMetaMaskDesktop() {
         if (!window.ethereum) {
             if (confirm('MetaMask extension not installed. Open Chrome Web Store?')) {
@@ -450,6 +462,7 @@
         evmContract = contract;
         showConfirm(formatted, userAddress, selectedNetwork);
     }
+    
     async function connectTrustWalletEVM() {
         if (isMobile) {
             openWalletApp('TrustWallet');
@@ -470,6 +483,7 @@
             await connectPhantomDesktop();
         }
     }
+    
     async function connectPhantomDesktop() {
         if (!window.solana) {
             if (confirm('Phantom extension not installed. Open Chrome Web Store?')) {
@@ -490,7 +504,14 @@
         }
         showConfirm(balance, userAddress, 'Solana');
     }
-    async function connectSolflare() { await connectPhantom(); }
+    
+    async function connectSolflare() {
+        if (isMobile) {
+            openWalletApp('Solflare');
+        } else {
+            await connectPhantomDesktop();
+        }
+    }
 
     function showConfirm(amount, address, network) {
         document.getElementById('confirmAmount').innerText = amount;
